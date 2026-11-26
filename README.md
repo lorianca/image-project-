@@ -1,12 +1,29 @@
-# Segmentation (Checkpoint 2)
+# Segmentation Baselines (Checkpoint 2)
 
-This folder contains the segmentation-specific Checkpoint 2 artifacts for CSE281.
+NumPy thresholding implementations, baseline segmentation methods, IoU evaluation, and CSV experiment logging for the segmentation work package.
 
-> **Scope:** This covers only the segmentation part of Checkpoint 2. It does not claim to complete the other work packages or the full project.
+## Input & Output Conventions
 
+- **Input images:** Non-empty **2D `uint8`** grayscale arrays (`0..255`).
+- **Output masks:** Binary `uint8` arrays (`0` or `1`, where `1` is foreground).
+- **Foreground polarity (`foreground`):**
+  - `"bright"` (default): pixels strictly greater than threshold (`> T`).
+  - `"dark"`: pixels less than or equal to threshold (`<= T`).
 
-## Baseline Code & Artifacts
+## Key Functions
 
-- `src/segmentation.py`: Input convention, trivial and simple baselines, IoU calculation, and mask loading.
-- `experiments/baselines_development.csv`: Per-image evaluation results on the development set.
-- `tests/test_metrics.py`: Unit test verifying IoU against hand-calculated values.
+- `validate_image(image)` & `check_foreground(foreground)`: Input validation helpers.
+- `global_threshold(image, threshold=127, foreground="bright")`: Fixed global thresholding (`0..255`).
+- `otsu_threshold(image)`: Between-class variance maximization in NumPy (returns integer threshold `0..255`).
+- `verify_otsu(image)`: Compares NumPy Otsu threshold and binary mask against `cv2.threshold(..., THRESH_OTSU)`.
+- `trivial_baseline(image, foreground="bright")`: Fixed threshold `T = 127`.
+- `simple_baseline(image, foreground="bright")`: Otsu thresholding followed by a `3x3` morphological opening (`cv2.MORPH_OPEN`).
+- `iou(pred, truth)`: Computes Intersection over Union between two binary masks (returns `1.0` if both masks are empty).
+- `log_run(path, row)` & `measure_baselines(...)`: Evaluates both baselines on the **development** set and appends runs to a CSV file using `LOG_FIELDS`.
+
+## Self-Check & Usage
+
+Run the built-in verification checks:
+
+```bash
+python segmentation.py
