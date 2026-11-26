@@ -1,1 +1,9 @@
-
+run_id,pipeline,stage,split,parameters,status,notes
+exp_001,Pipeline_A,enhancement,val,"gamma=0.7; clahe_channel=L; clip_limit=2.0; tile_grid=(8,8)",selected,"Final enhancement pipeline: lifts shadow illumination and improves local contrast while preserving LAB color fidelity"
+exp_002,Ablation,enhancement,val,"unsharp_masking(amount=0.5, 1.2)",rejected,"Minimal effect at 0.5; accentuates noise/grain at 1.2 compared to CLAHE on L channel"
+exp_003,Ablation,enhancement,val,"bilateral_filter",rejected,"Smooths flat regions but does not enhance local contrast inside subtle leaf lesions"
+exp_004,Ablation,enhancement,val,"laplacian(weight=0.4, ksize=3)",rejected,"Minimal visual improvement over original clean leaf images"
+exp_005,Ablation,enhancement,val,"high_pass(sigma=3.0, amount=0.8)",rejected,"Minimal clarity gain compared to Gamma + CLAHE"
+exp_006,Ablation,enhancement,val,"gaussian_blur(ksize=(5,5), sigma=1.2)",rejected,"Slightly blurs fine lesion boundaries without contrast gain"
+exp_007,Ablation,enhancement,val,"median_blur(ksize=5)",rejected,"Minimal effect on clean dataset images due to absence of salt-and-pepper noise"
+exp_008,Sanity_Check,restoration_demo,val,"salt_and_pepper(prob=0.10) + median(ksize=7) + gamma(0.7) + clahe(2.0)",demo_only,"Synthetic demonstration confirming Median filter effectiveness only when impulsive noise is present"
