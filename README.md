@@ -119,3 +119,12 @@ pip install -r requirements.txt
 ```bash
 python src/evaluate.py
 ```
+
+## Team Roles & Responsibilities
+
+* **Tech Lead ():** Problem formulation, repository structure, integration, code review, final pipeline selection (`config` file, `pipeline.py`, merges), and running the final pipeline across 3 noise levels and 3 seeds with the final results table. 
+* **Data and Baseline Engineer ( Zina Ashraf Abdelfatah):** Image loading, dataset splitting, ground truth, controlled degradation, evaluation metrics, and baselines (`data.py`, `metrics.py`, baseline scripts), including resolution/gray-level studies and comparing Pipeline A with baselines.
+* **Enhancement Engineer ( Lorianca Makram ):** Histogram analysis, point transformations, histogram equalization, smoothing and sharpening filters (`enhancement.py`), enhancement comparisons, and kernel-size studies.
+* **Restoration and Frequency Engineer (Ahmed Mohamed Abd Al Halim):** Noise models, spatial restoration filters, DFT, and frequency-domain filters (`restoration.py`, `frequency.py`), including PSNR per noise type and spatial vs. frequency ablation.
+* **Segmentation Engineer (Ahmed Ossama Hassan):** Edge, point, and line detection, thresholding, and edge linking or Hough transform (`segmentation.py`), including detector and threshold-method studies.
+* **Morphology and Evaluation Engineer (Sara Mohamed Maher ):** Morphological refinement, lesion measurement, test-set evaluation, failure analysis, and demo (`morphology.py`, `evaluate.py`, `run_pipeline.py`, demo app), including structuring-element studies and failure-case analysis per pipeline.
