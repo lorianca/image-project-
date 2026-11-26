@@ -66,6 +66,15 @@ The following table summarizes the main components of the baselines and proposed
 
 ## Setup and Run Instructions
 
+## Experiments Notebook
+
+An executed Google Colab notebook is available at `notebooks/degradation_median_frequency_experiments.ipynb`[cite: 8]. It covers:
+
+- **Dataset Samples:** Representative `Apple` (Cedar Apple Rust) and `Wheat` (Wheat Stripe Rust) images across `train`, `val`, and `test` splits[cite: 1].
+- **Noise & Restoration:** Salt-and-pepper impulse noise degradation and restoration using a 3x3 median filter, evaluated with `MSE` and `PSNR`[cite: 1].
+- **Frequency Analysis:** Centered 2D FFT magnitude spectrum and low-pass filtering[cite: 1].
+
+
 ### 1. Clone the Repository
 
 ```bash
