@@ -65,12 +65,6 @@ The following table summarizes the main components of the baselines and proposed
 - **Frequency Analysis (`src/frequency.py`):** Centred Fourier log-magnitude spectrum (`centred_spectrum`) and 2D Gaussian low-pass filter (`gaussian_lpf`).
 
 ## Setup and Run Instructions
-
-### 1. Clone the Repository
-
-```bash
-git clone [https://github.com/lorianca/image-project-.git](https://github.com/lorianca/image-project-.git)
-cd image-project-
 2. Create a Virtual Environment
 Bash
 python -m venv venv
@@ -96,3 +90,16 @@ from src.restoration import median_numpy_3x3
 6. Run the Evaluation
 Bash
 python src/evaluate.py
+### 1. Clone the Repository
+
+```bash
+git clone [https://github.com/lorianca/image-project-.git](https://github.com/lorianca/image-project-.git)
+cd image-project-
+
+
+
+
+
+
+
+
