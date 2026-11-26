@@ -1,4 +1,4 @@
 operation,kernel,IoU
 Opening,3x3,0.9712
 Closing,3x3,0.9865
-Hole Filling,N/A,0.9780
+Hole Filling,N/A,0.9837
