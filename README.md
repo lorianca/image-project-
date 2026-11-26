@@ -71,3 +71,28 @@ The following table summarizes the main components of the baselines and proposed
 ```bash
 git clone [https://github.com/lorianca/image-project-.git](https://github.com/lorianca/image-project-.git)
 cd image-project-
+2. Create a Virtual Environment
+Bash
+python -m venv venv
+3. Activate the Virtual Environment
+Windows:
+
+Bash
+venv\Scripts\activate
+Linux / macOS:
+
+Bash
+source venv/bin/activate
+4. Install Dependencies
+Bash
+pip install -r requirements.txt
+5. Test Degradation, Median Filter, and Frequency Functions
+Import and run the functions from src/data.py, src/restoration.py, and src/frequency.py in Python or Google Colab:
+
+Python
+from src.data import degrade_image
+from src.frequency import centred_spectrum, gaussian_lpf
+from src.restoration import median_numpy_3x3
+6. Run the Evaluation
+Bash
+python src/evaluate.py
