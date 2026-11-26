@@ -61,6 +61,24 @@ The following table summarizes the main components of the baselines and proposed
 | Pipeline B | Gamma Correction / Histogram Equalization | Median / Gaussian Filtering | Adaptive Thresholding / Edge Detection | None | Pixel Count |
 | Pipeline C | Enhancement from Pipeline B | Noise Removal | Adaptive / Edge-based Segmentation | Opening, Closing, Hole Filling | Connected Components / Area Filtering |
 
+## Image Enhancement Experiments & Results
+
+Our standardized enhancement pipeline applies **Gamma Correction (`gamma = 0.7`)** followed by **CLAHE** on the **L channel** in `LAB` color space (`clipLimit = 2.0`, `tileGridSize = (8, 8)`) to lift shadow/illumination regions and improve local contrast while preserving leaf color fidelity.
+
+### 1. Gamma (`0.7`) + CLAHE (`L`-channel, `clipLimit = 2.0`)+unsharpe
+![Gamma and CLAHE ana unsharpe  Comparison](results/Apple Gamma (Unsharpe + clashe).png)
+
+
+### 2. Gamma (`0.7`) + CLAHE (`L`-channel, `clipLimit = 2.0`)+unsharpe
+![Gamma and CLAHE ana unsharpe  Comparison](results/wheat Gamma (Unsharpe + clashe).png)
+
+### 3. Filters Comparison vs. Original (`Laplacian`)
+![Filters Comparison](results/laplacian.png)
+### 4 . Filters Comparison vs. Original ( `High-pass`)
+![Filters Comparison](results/high pass.png)
+### 5 . Synthetic Salt-and-Pepper Noise Experiment
+![Salt and Pepper Noise Removal](results/median + gamma + clashe.png)
+
 ## Setup and Run Instructions
 
 ### 1. Clone the Repository
