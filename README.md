@@ -64,7 +64,6 @@ The following table summarizes the main components of the baselines and proposed
 - **Degradation & Restoration (`src/data.py`, `src/restoration.py`):** Controlled noise generation (`degrade_image`) and 3x3 median filtering in NumPy (`median_numpy_3x3`).
 - **Frequency Analysis (`src/frequency.py`):** Centred Fourier log-magnitude spectrum (`centred_spectrum`) and 2D Gaussian low-pass filter (`gaussian_lpf`).
 
-## Setup and Run Instructions
 
 ## Experiments Notebook
 
@@ -73,6 +72,9 @@ An executed Google Colab notebook is available at `notebooks/degradation_median_
 - **Dataset Samples:** Representative `Apple` (Cedar Apple Rust) and `Wheat` (Wheat Stripe Rust) images across `train`, `val`, and `test` splits[cite: 1].
 - **Noise & Restoration:** Salt-and-pepper impulse noise degradation and restoration using a 3x3 median filter, evaluated with `MSE` and `PSNR`[cite: 1].
 - **Frequency Analysis:** Centered 2D FFT magnitude spectrum and low-pass filtering[cite: 1].
+
+## Setup and Run Instructions
+
 
 
 ### 1. Clone the Repository
