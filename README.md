@@ -66,18 +66,18 @@ The following table summarizes the main components of the baselines and proposed
 Our standardized enhancement pipeline applies **Gamma Correction (`gamma = 0.7`)** followed by **CLAHE** on the **L channel** in `LAB` color space (`clipLimit = 2.0`, `tileGridSize = (8, 8)`) to lift shadow/illumination regions and improve local contrast while preserving leaf color fidelity.
 
 ### 1. Gamma (`0.7`) + CLAHE (`L`-channel, `clipLimit = 2.0`)+unsharpe
-![Gamma and CLAHE ana unsharpe  Comparison](results/Apple Gamma (Unsharpe + clashe).png)
+![Gamma and CLAHE ana unsharpe  Comparison](results/Appleexp.png)
 
 
 ### 2. Gamma (`0.7`) + CLAHE (`L`-channel, `clipLimit = 2.0`)+unsharpe
-![Gamma and CLAHE ana unsharpe  Comparison](results/wheat Gamma (Unsharpe + clashe).png)
+![Gamma and CLAHE ana unsharpe  Comparison](results/wheatexp.png)
 
 ### 3. Filters Comparison vs. Original (`Laplacian`)
 ![Filters Comparison](results/laplacian.png)
 ### 4 . Filters Comparison vs. Original ( `High-pass`)
-![Filters Comparison](results/high pass.png)
+![Filters Comparison](results/highpass.png)
 ### 5 . Synthetic Salt-and-Pepper Noise Experiment
-![Salt and Pepper Noise Removal](results/median + gamma + clashe.png)
+![Salt and Pepper Noise Removal](results/medianexp.png)
 
 ## Setup and Run Instructions
 
