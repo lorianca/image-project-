@@ -15,3 +15,11 @@ exp_013,Pipeline_A,morphology,all,"operation=Closing; kernel=5x5",evaluated,"Mea
 exp_014,Pipeline_A,morphology,all,"operation=Closing; kernel=7x7",evaluated,"Mean IoU=0.906783 across 240 samples"
 exp_015,Pipeline_A,morphology,all,"operation=Hole Filling",evaluated,"Mean IoU=0.983655 across 240 samples"
 
+exp_016	Ablation	enhancement	val	hist_eq(channel=L, space=LAB)	rejected	Global equalization stretches histogram across the full image and can over-enhance background noise compared to CLAHE
+exp_017	Ablation	enhancement	val	log_transform(scale=1.0)	rejected	Expands dark pixels but compresses mid-to-bright contrast, reducing lesion subtlety compared to Gamma + CLAHE
+exp_018	Ablation	enhancement	val	image_negative(s=255-r)	rejected	Inverts intensity polarity and reverses natural leaf/lesion color semantics; unsuitable for direct segmentation
+exp_019	Ablation	enhancement	val	brightness(beta=-20)	rejected	Low negative shift slightly darkens global brightness without major contrast gain; insufficient alone compared to Gamma + CLAHE
+exp_020	Ablation	enhancement	val	brightness(beta=+20)	rejected	Low positive shift slightly brightens leaf while keeping details; insufficient alone compared to Gamma + CLAHE
+exp_021	Ablation	enhancement	val	brightness(beta=-50)	rejected	High negative shift darkens the image and causes shadow clipping/detail loss
+exp_022	Ablation	enhancement	val	brightness(beta=+50)	rejected	High positive shift raises brightness toward highlight clipping
+exp_023	Ablation	enhancement	val	brightness(beta=+80)	rejected	High positive shift causes highlight clipping and washes out lesion/leaf contrast
