@@ -1,0 +1,316 @@
+from pathlib import Path
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
+
+
+# --- 1. Core Enhancement & Filtering Functions ---
+def gamma_correction(rgb: np.ndarray, gamma: float = 0.7) -> np.ndarray:
+  """Apply power-law (gamma < 1) correction on an RGB uint8 image."""
+  if gamma <= 0:
+    raise ValueError("gamma must be greater than 0.")
+  if abs(gamma - 1.0) < 1e-6:
+    return rgb.copy()
+
+  inv_gamma = 1.0 / gamma
+  lut = np.clip(
+      np.power(np.linspace(0.0, 1.0, 256), inv_gamma) * 255.0, 0, 255
+  ).astype(np.uint8)
+  return cv2.LUT(rgb, lut)
+
+
+def clahe_luminance(
+    rgb: np.ndarray,
+    clip_limit: float = 2.0,
+    tile_grid_size: tuple[int, int] = (8, 8),
+) -> np.ndarray:
+  """Apply CLAHE on the L channel of LAB color space to preserve color balance."""
+  lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)
+  l_ch, a_ch, b_ch = cv2.split(lab)
+  clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
+  l_enhanced = clahe.apply(l_ch)
+  return cv2.cvtColor(cv2.merge((l_enhanced, a_ch, b_ch)), cv2.COLOR_LAB2RGB)
+
+
+def enhance_image(
+    rgb: np.ndarray,
+    gamma: float = 0.7,
+    use_clahe: bool = True,
+    clip_limit: float = 2.0,
+    tile_grid_size: tuple[int, int] = (8, 8),
+) -> np.ndarray:
+  """Enhance an RGB leaf image using Gamma correction followed by LAB CLAHE."""
+  enhanced = gamma_correction(rgb, gamma=gamma)
+  if use_clahe:
+    enhanced = clahe_luminance(
+        enhanced, clip_limit=clip_limit, tile_grid_size=tile_grid_size
+    )
+  return enhanced
+
+
+def enhance_split_from_csv(
+    split_csv: Path,
+    orig_root: Path,
+    out_root: Path,
+    split_name: str = "val",
+    gamma: float = 0.7,
+    use_clahe: bool = True,
+    clip_limit: float = 2.0,
+    tile_grid_size: tuple[int, int] = (8, 8),
+) -> int:
+  """Enhance images belonging to `split_name` from `orig_root` and save them."""
+  df = pd.read_csv(split_csv)
+  sub = df[df["split"].astype(str).str.lower() == split_name.lower()]
+
+  by_rel: dict[str, Path] = {}
+  by_name: dict[str, Path] = {}
+  for p in orig_root.rglob("*"):
+    if p.is_file() and p.suffix.lower() in IMAGE_EXTS:
+      rel = str(p.relative_to(orig_root)).replace("\\", "/")
+      by_rel[rel] = p
+      by_name.setdefault(p.name, p)
+
+  saved_count = 0
+  for rel_img in sub["image"].astype(str):
+    rel_clean = rel_img.strip().lstrip("./")
+    src_path = by_rel.get(rel_clean) or by_name.get(Path(rel_clean).name)
+    if src_path is None:
+      continue
+
+    bgr = cv2.imread(str(src_path))
+    if bgr is None:
+      continue
+
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    out_rgb = enhance_image(
+        rgb,
+        gamma=gamma,
+        use_clahe=use_clahe,
+        clip_limit=clip_limit,
+        tile_grid_size=tile_grid_size,
+    )
+    out_bgr = cv2.cvtColor(out_rgb, cv2.COLOR_RGB2BGR)
+
+    dst_path = out_root / split_name / rel_clean
+    dst_path.parent.mkdir(parents=True, exist_ok=True)
+    cv2.imwrite(str(dst_path), out_bgr)
+    saved_count += 1
+
+  return saved_count
+
+
+def only_laplacian(rgb: np.ndarray, weight: float = 0.4) -> np.ndarray:
+  lap = cv2.Laplacian(rgb, cv2.CV_32F, ksize=3)
+  out = rgb.astype(np.float32) - weight * lap
+  return np.clip(out, 0, 255).astype(np.uint8)
+
+
+def only_highpass(
+    rgb: np.ndarray, sigma: float = 3.0, amount: float = 0.8
+) -> np.ndarray:
+  low_pass = cv2.GaussianBlur(rgb, (0, 0), sigmaX=sigma, sigmaY=sigma).astype(
+      np.float32
+  )
+  high_pass = rgb.astype(np.float32) - low_pass
+  out = rgb.astype(np.float32) + amount * high_pass
+  return np.clip(out, 0, 255).astype(np.uint8)
+
+
+def only_gaussian(
+    rgb: np.ndarray, ksize: tuple[int, int] = (5, 5), sigma: float = 1.2
+) -> np.ndarray:
+  return cv2.GaussianBlur(rgb, ksize, sigmaX=sigma, sigmaY=sigma)
+
+
+def only_median(rgb: np.ndarray, ksize: int = 5) -> np.ndarray:
+  return cv2.medianBlur(rgb, ksize)
+
+
+def luma_stats(rgb: np.ndarray) -> tuple[float, float]:
+  gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+  return float(gray.mean()), float(gray.std())
+
+
+# --- 2. Load Validation Paths (`val_paths`) ---
+if "val_paths" not in globals():
+  extract_dir = Path("/content/field_pdd_extracted")
+  orig_root = extract_dir / "OriginalData"
+  orig_by_rel, orig_by_name = {}, {}
+  for p in orig_root.rglob("*"):
+    if p.is_file() and p.suffix.lower() in IMAGE_EXTS:
+      rel = str(p.relative_to(orig_root)).replace("\\", "/")
+      orig_by_rel[rel] = p
+      orig_by_name.setdefault(p.name, p)
+
+  split_candidates = list(Path("/content").rglob("split.csv")) + list(
+      Path("/content/drive/MyDrive").rglob("split.csv")
+  )
+  assert len(split_candidates) > 0, "ملف split.csv مش موجود في /content ولا Drive!"
+  split_df = pd.read_csv(split_candidates[0])
+  val_df = split_df[split_df["split"].astype(str).str.lower() == "val"]
+
+  val_paths = []
+  for rel in val_df["image"].astype(str):
+    rel_clean = rel.strip().lstrip("./")
+    fname = Path(rel_clean).name
+    if rel_clean in orig_by_rel:
+      val_paths.append(orig_by_rel[rel_clean])
+    elif fname in orig_by_name:
+      val_paths.append(orig_by_name[fname])
+
+assert len(val_paths) > 0, "مفيش صور val اتلاقت؛ تأكدي من مسار OriginalData و split.csv."
+
+
+def evaluate_method_on_val(method_name: str, fn, sample_title: str) -> None:
+  m_orig, s_orig, m_proc, s_proc = [], [], [], []
+  for p in val_paths:
+    bgr = cv2.imread(str(p))
+    if bgr is None:
+      continue
+    orig = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    proc = fn(orig)
+    mo, so = luma_stats(orig)
+    mp, sp = luma_stats(proc)
+    m_orig.append(mo)
+    s_orig.append(so)
+    m_proc.append(mp)
+    s_proc.append(sp)
+
+  display(
+      pd.DataFrame([{
+          "Method": method_name,
+          "Orig Mean": round(float(np.mean(m_orig)), 2),
+          "Proc Mean": round(float(np.mean(m_proc)), 2),
+          "Orig Std": round(float(np.mean(s_orig)), 2),
+          "Proc Std": round(float(np.mean(s_proc)), 2),
+      }])
+  )
+
+  sample_path = val_paths[0]
+  sample_orig = cv2.cvtColor(
+      cv2.imread(str(sample_path)), cv2.COLOR_BGR2RGB
+  )
+  sample_proc = fn(sample_orig)
+
+  fig, axes = plt.subplots(1, 2, figsize=(9.5, 3.4))
+  axes[0].imshow(sample_orig)
+  axes[0].set_title(f"Original ({sample_path.name})")
+  axes[0].axis("off")
+  axes[1].imshow(sample_proc)
+  axes[1].set_title(sample_title)
+  axes[1].axis("off")
+  plt.tight_layout()
+  plt.show()
+
+
+# --- 3. Histogram Equalization (L channel) ---
+def hist_eq_luminance(rgb: np.ndarray) -> np.ndarray:
+  lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)
+  l_ch, a_ch, b_ch = cv2.split(lab)
+  l_eq = cv2.equalizeHist(l_ch)
+  return cv2.cvtColor(cv2.merge((l_eq, a_ch, b_ch)), cv2.COLOR_LAB2RGB)
+
+
+evaluate_method_on_val(
+    "Hist Equalization (L channel)",
+    hist_eq_luminance,
+    "Histogram Equalization (L channel)",
+)
+
+
+# --- 4. Log Transformation ---
+def log_transform(rgb: np.ndarray) -> np.ndarray:
+  img_f = rgb.astype(np.float32)
+  max_val = max(float(np.max(img_f)), 1e-6)
+  c = 255.0 / np.log(1.0 + max_val)
+  log_img = c * np.log(1.0 + img_f)
+  return np.clip(log_img, 0, 255).astype(np.uint8)
+
+
+evaluate_method_on_val(
+    "Log Transformation",
+    log_transform,
+    "Log Transformation",
+)
+
+
+# --- 5. Image Negative ---
+def image_negative(rgb: np.ndarray) -> np.ndarray:
+  return 255 - rgb
+
+
+evaluate_method_on_val(
+    "Image Negative (255 - r)",
+    image_negative,
+    "Image Negative (255 - r)",
+)
+
+
+# --- 6. Brightness Comparison Across Beta Values ---
+def adjust_brightness(rgb: np.ndarray, beta: int) -> np.ndarray:
+  """Adjust image brightness by adding beta and clipping to [0, 255]."""
+  adjusted = rgb.astype(np.int16) + beta
+  return np.clip(adjusted, 0, 255).astype(np.uint8)
+
+
+betas = [-50, -20, 20, 50, 80]
+beta_rows = []
+for b in betas:
+  m_orig, s_orig, m_proc, s_proc = [], [], [], []
+  for p in val_paths:
+    bgr = cv2.imread(str(p))
+    if bgr is None:
+      continue
+    orig = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    proc = adjust_brightness(orig, beta=b)
+    mo, so = luma_stats(orig)
+    mp, sp = luma_stats(proc)
+    m_orig.append(mo)
+    s_orig.append(so)
+    m_proc.append(mp)
+    s_proc.append(sp)
+
+  beta_rows.append({
+      "Beta": f"{b:+d}",
+      "Level": (
+          "Low (-)"
+          if b == -20
+          else (
+              "High (-)"
+              if b < -20
+              else ("Low (+)" if b == 20 else "High (+)")
+          )
+      ),
+      "Orig Mean": round(float(np.mean(m_orig)), 2),
+      "Proc Mean": round(float(np.mean(m_proc)), 2),
+      "Delta Mean": round(float(np.mean(m_proc) - np.mean(m_orig)), 2),
+      "Orig Std": round(float(np.mean(s_orig)), 2),
+      "Proc Std": round(float(np.mean(s_proc)), 2),
+      "Delta Std": round(float(np.mean(s_proc) - np.mean(s_orig)), 2),
+  })
+
+display(pd.DataFrame(beta_rows))
+
+sample_path = val_paths[0]
+sample_orig = cv2.cvtColor(cv2.imread(str(sample_path)), cv2.COLOR_BGR2RGB)
+
+fig, axes = plt.subplots(2, 3, figsize=(13.5, 7.2))
+axes = axes.ravel()
+
+axes[0].imshow(sample_orig)
+axes[0].set_title(f"Original ({sample_path.name})", fontsize=9)
+axes[0].axis("off")
+
+for idx, b in enumerate(betas, start=1):
+  axes[idx].imshow(adjust_brightness(sample_orig, beta=b))
+  axes[idx].set_title(f"beta = {b:+d}", fontsize=9)
+  axes[idx].axis("off")
+
+plt.suptitle(
+    "Brightness Comparison Across Beta Values", fontsize=11, fontweight="bold"
+)
+plt.tight_layout()
+plt.show()
