@@ -23,6 +23,7 @@ IoU is the primary evaluation metric because both missed lesions (false negative
 
 **Field-PDD:** 240 real-world leaf images with pixel-level ground-truth masks.
 
+
 - **Source:**
 https://www.kaggle.com/datasets/alexzcheny/testdataset
 - **Licence:**
@@ -61,24 +62,36 @@ The following table summarizes the main components of the baselines and proposed
 | Pipeline B | Gamma Correction / Histogram Equalization | Median / Gaussian Filtering | Adaptive Thresholding / Edge Detection | None | Pixel Count |
 | Pipeline C | Enhancement from Pipeline B | Noise Removal | Adaptive / Edge-based Segmentation | Opening, Closing, Hole Filling | Connected Components / Area Filtering |
 
+
 - **Degradation & Restoration (`src/data.py`, `src/restoration.py`):** Controlled noise generation (`degrade_image`) and 3x3 median filtering in NumPy (`median_numpy_3x3`).
 - **Frequency Analysis (`src/frequency.py`):** Centred Fourier log-magnitude spectrum (`centred_spectrum`) and 2D Gaussian low-pass filter (`gaussian_lpf`).
 
+## Segmentation Baselines (Checkpoint 2)
 
-## Experiments Notebook
+NumPy thresholding implementations, baseline segmentation methods, IoU evaluation, and CSV experiment logging for the segmentation work package.
 
-An executed Google Colab notebook is available at `notebooks/degradation_median_frequency_experiments.ipynb`[cite: 8]. It covers:
+### Input & Output Conventions
 
-- **Dataset Samples:** Representative `Apple` (Cedar Apple Rust) and `Wheat` (Wheat Stripe Rust) images across `train`, `val`, and `test` splits[cite: 1].
-- **Noise & Restoration:** Salt-and-pepper impulse noise degradation and restoration using a 3x3 median filter, evaluated with `MSE` and `PSNR`[cite: 1].
-- **Frequency Analysis:** Centered 2D FFT magnitude spectrum and low-pass filtering[cite: 1].
+- **Input images:** Non-empty **2D `uint8`** grayscale arrays (`0..255`).
+- **Output masks:** Binary `uint8` arrays (`0` or `1`, where `1` is foreground).
+- **Foreground polarity (`foreground`):**
+  - `"bright"` (default): pixels strictly greater than threshold (`> T`).
+  - `"dark"`: pixels less than or equal to threshold (`<= T`).
 
-## Setup and Run Instructions
+### Key Functions
 
+- `validate_image(image)` & `check_foreground(foreground)`: Input validation helpers.
+- `global_threshold(image, threshold=127, foreground="bright")`: Fixed global thresholding (`0..255`).
+- `otsu_threshold(image)`: Between-class variance maximization in NumPy (returns integer threshold `0..255`).
+- `verify_otsu(image)`: Compares NumPy Otsu threshold and binary mask against `cv2.threshold(..., THRESH_OTSU)`.
+- `trivial_baseline(image, foreground="bright")`: Fixed threshold `T = 127`.
+- `simple_baseline(image, foreground="bright")`: Otsu thresholding followed by a `3x3` morphological opening (`cv2.MORPH_OPEN`).
+- `iou(pred, truth)`: Computes Intersection over Union between two binary masks (returns `1.0` if both masks are empty).
+- `log_run(path, row)` & `measure_baselines(...)`: Evaluates both baselines on the **development** set and appends runs to a CSV file using `LOG_FIELDS`.
 
+### Self-Check & Usage
 
-### 1. Clone the Repository
+Run the built-in verification checks:
 
 ```bash
-git clone [https://github.com/lorianca/image-project-.git](https://github.com/lorianca/image-project-.git)
-cd image-project-
+python segmentation.py
