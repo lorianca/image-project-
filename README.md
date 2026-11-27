@@ -93,8 +93,8 @@ NumPy thresholding implementations, baseline segmentation methods, IoU evaluatio
 
 Run the built-in verification checks:
 
-```bash
-python segmentation.py
+bash
+python segmentation.py '''
 
 
 ## Image Enhancement Experiments & Results
