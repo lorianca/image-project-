@@ -95,3 +95,75 @@ Run the built-in verification checks:
 
 ```bash
 python segmentation.py
+
+
+## Image Enhancement Experiments & Results
+
+Our standardized enhancement pipeline applies **Gamma Correction (`gamma = 0.7`)** followed by **CLAHE** on the **L channel** in `LAB` color space (`clipLimit = 2.0`, `tileGridSize = (8, 8)`) to lift shadow/illumination regions and improve local contrast while preserving leaf color fidelity.
+
+### 1. Gamma (`0.7`) + CLAHE (`L`-channel, `clipLimit = 2.0`)+unsharpe
+![Gamma and CLAHE ana unsharpe  Comparison](results/Appleexp.png)
+
+### 2. Gamma (`0.7`) + CLAHE (`L`-channel, `clipLimit = 2.0`)+unsharpe
+![Gamma and CLAHE ana unsharpe  Comparison](results/wheatexp.png)
+
+### 3. Filters Comparison vs. Original (`Laplacian`)
+![Filters Comparison](results/laplacian.png)
+
+### 4 . Filters Comparison vs. Original ( `High-pass`)
+![Filters Comparison](results/highpass.png)
+
+### 5 . Synthetic Salt-and-Pepper Noise Experiment
+![Salt and Pepper Noise Removal](results/medianexp.png)
+
+## Setup and Run Instructions
+
+### 1. Clone the Repository
+
+```bash
+
+git clone https://github.com/lorianca/image-project-.git
+cd image-project-
+```
+
+### 2. Create a Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+### 3. Activate the Virtual Environment
+
+**Windows:**
+
+```bash
+venv\Scripts\activate
+```
+
+**Linux / macOS:**
+
+```bash
+source venv/bin/activate
+```
+
+### 4. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 5. Run the Evaluation
+
+```bash
+python src/evaluate.py
+```
+
+## Team Roles & Responsibilities
+
+- **Tech Lead ():** Problem formulation, repository structure, integration, code review, final pipeline selection (`config` file, `pipeline.py`, merges), and running the final pipeline across 3 noise levels and 3 seeds with the final results table. 
+- **Data and Baseline Engineer ( Zina Ashraf Abdelfatah):** Image loading, dataset splitting, ground truth, controlled degradation, evaluation metrics, and baselines (`data.py`, `metrics.py`, baseline scripts), including resolution/gray-level studies and comparing Pipeline A with baselines.
+- **Enhancement Engineer ( Lorianca Makram ):** Histogram analysis, point transformations, histogram equalization, smoothing and sharpening filters (`enhancement.py`), enhancement comparisons, and kernel-size studies.
+- **Restoration and Frequency Engineer (Ahmed Mohamed Abd Al Halim):** Noise models, spatial restoration filters, DFT, and frequency-domain filters (`restoration.py`, `frequency.py`), including PSNR per noise type and spatial vs. frequency ablation.
+- **Segmentation Engineer (Ahmed Ossama Hassan):** Edge, point, and line detection, thresholding, and edge linking or Hough transform (`segmentation.py`), including detector and threshold-method studies.
+- **Morphology and Evaluation Engineer (Sara Mohamed Maher ):** Morphological refinement, lesion measurement, test-set evaluation, failure analysis, and demo (`morphology.py`, `evaluate.py`, `run_pipeline.py`, demo app), including structuring-element studies and failure-case analysis per pipeline.
+ ده القديم 
